@@ -1,13 +1,33 @@
 const express = require('express');
 const app = express();
+const bodyParser = require('body-parser');
+
 
 app.use(bodyParser.json());
 app.use(express.static('public'));
+app.use(bodyParser.urlencoded({ 
+  extended: true
+}));
+app.post('/start', function(req,res){ 
+  var link = req.body.link; 
+  var selector1 =req.body.selector; 
+  var price = req.body.price; 
+  
+  processStart(link,price,selector1);
+  
+        
+  return res.redirect('success.html'); 
+}) 
+app.get('/stop', function(req,res){ 
+  
+  processStop();
+  
+        
+  return res.redirect('index.html'); 
+})
+app.listen(3000);
 
 
-const productPage = 'https://www.amazon.in/Samsung-Galaxy-Ocean-128GB-Storage/dp/B07HGGYWL6/ref=lp_17033333031_1_1?s=electronics&ie=UTF8&qid=1595054432&sr=1-1';
-const desiredPrice = 18000;
-const selector = '#priceblock_dealprice';
 
 //Obtain HTML of page
 const axios = require('axios');
@@ -22,7 +42,7 @@ async function getHTML(url) {
 //Selecting price with Chereo
 const cheerio = require('cheerio');
 /* ...*/
-function scrapPrice(html) {
+function scrapPrice(html,selector) {
 
 
   const $ = cheerio.load(html); //First you need to load in the HTML
@@ -39,16 +59,29 @@ const currencyStringToNumber = (currency) => Number(currency.replace(/[^0-9.-]+/
 const cron = require('node-cron');
 
 /* .Scheduling job every minute. */
-const sendingJob = cron.schedule('* * * * *', async () => {
-  console.log('running a task every min ⏲️');
-  const html = await getHTML(productPage).catch(console.log);
-  const currentPrice = currencyStringToNumber(scrapPrice(html));
-  console.log(currentPrice);
-  if (currentPrice < desiredPrice) {
-    sendMail();
-    
-  }
-});
+//Main starting point
+var sendingJob;
+const processStart = (productPage,desiredPrice,selector)=>{
+  console.log('process started');
+  sendingJob = cron.schedule('* * * * *', async () => {
+    console.log('running a task every min ⏲️');
+    //console.log(productPage);
+    const html = await getHTML(productPage).catch(console.log);
+    const currentPrice = currencyStringToNumber(scrapPrice(html,selector));
+    console.log(currentPrice);
+    if (currentPrice < desiredPrice) {
+      sendMail();
+      
+    }
+  });
+}
+const processStop =()=>{
+  sendingJob.stop();
+  sendingJob.destroy();
+  console.log("stopped");
+
+}
+
 
 //Triggring Email
 var nodemailer = require('nodemailer');
@@ -70,9 +103,9 @@ var mailOptions = {
   text: 'Congratulations! you just saved some bucks !'
 };
 const sendMail = () => {
-  sendingJob.stop();
-  sendingJob.destroy();
+  
   transporter.sendMail(mailOptions, function (error, info) {
+    processStop();
     if (error) {
       console.log(error);
     } else {

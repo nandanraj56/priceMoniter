@@ -18,21 +18,13 @@
 <div class="container">
   <div class="row">
     <div class="col-sm-4">
-        <form action="/start" method="POST">
-            <div class="form-group">
-              <label for="link">Product Link</label>
-              <input type="text" class="form-control" id="link">
-            </div>
-            <div class="form-group">
-              <label for="selector">Selector</label>
-              <input type="text" class="form-control" id="selector">
-            </div>
-            <div class="form-group">
-                <label for="price">Price</label>
-                <input type="number" class="form-control" id="price">
-            </div>
-            <button type="submit" class="btn btn-default">Start</button>
+        <h4>Process started</h4>
+        <form action="/stop" method="GET">
+            
+            <button type="submit" class="btn btn-default">Stop</button>
         </form>
+        
+        
     </div>
     
   </div>
